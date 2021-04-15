@@ -8,7 +8,8 @@ import numpy as np
 import scipy.stats as ss
 import scipy.optimize as sopt
 
-def price(strike, spot, texp, vol, intr=0.0, divr=0.0, cp_sign=1):
+def price(strike, spot, texp, vol, intr=0.0, divr=0.0, cp_sign=1):   
+    ###spot = S_T, this function doesn't consider the situation spot = S_0
     div_fac = np.exp(-texp*divr)
     disc_fac = np.exp(-texp*intr)
     forward = spot / disc_fac * div_fac
@@ -40,22 +41,40 @@ class Model:
         return price(strike, spot, texp, vol, intr=self.intr, divr=self.divr, cp_sign=cp_sign)
     
     def delta(self, strike, spot, texp=None, vol=None, cp_sign=1):
-        ''' 
-        <-- PUT your implementation here
-        '''
-        return 0
+        vol = self.vol if(vol is None) else vol
+        texp = self.texp if(texp is None) else texp
+          
+        div_fac = np.exp(-texp*self.divr)
+        disc_fac = np.exp(-texp*self.intr)
+        forward = spot / disc_fac * div_fac
+    
+        vol_std = np.fmax(vol*np.sqrt(texp), 1e-32)
+        d = (forward-strike)/vol_std
+        return disc_fac * ss.norm.cdf(cp_sign*d)
 
     def vega(self, strike, spot, texp=None, vol=None, cp_sign=1):
-        ''' 
-        <-- PUT your implementation here
-        '''
-        return 0
+        vol = self.vol if(vol is None) else vol
+        texp = self.texp if(texp is None) else texp
+          
+        div_fac = np.exp(-texp*self.divr)
+        disc_fac = np.exp(-texp*self.intr)
+        forward = spot / disc_fac * div_fac
+    
+        vol_std = np.fmax(vol*np.sqrt(texp), 1e-32)
+        d = (forward-strike)/vol_std
+        return disc_fac * np.sqrt(texp) * ss.norm.pdf(cp_sign*d)
 
     def gamma(self, strike, spot, texp=None, vol=None, cp_sign=1):
-        ''' 
-        <-- PUT your implementation here
-        '''
-        return 0
+        vol = self.vol if(vol is None) else vol
+        texp = self.texp if(texp is None) else texp
+          
+        div_fac = np.exp(-texp*self.divr)
+        disc_fac = np.exp(-texp*self.intr)
+        forward = spot / disc_fac * div_fac
+    
+        vol_std = np.fmax(vol*np.sqrt(texp), 1e-32)
+        d = (forward-strike)/vol_std
+        return disc_fac * ss.norm.pdf(cp_sign*d) / vol_std
 
     def impvol(self, price_in, strike, spot, texp=None, cp_sign=1):
         texp = self.texp if(texp is None) else texp
