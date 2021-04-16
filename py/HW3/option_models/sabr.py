@@ -59,9 +59,9 @@ class ModelBsmMC:
         disc_fac = np.exp(-texp*self.intr)
         forward = spot / disc_fac * div_fac
         
-        #np.random.seed(12345)
+        np.random.seed(12345)
         
-        step, M = 0.25, 10000
+        step, M = 0.01, 10000
         N = int(texp / step)
         
         X = np.random.multivariate_normal([0,0], [[1, self.rho], [self.rho, 1]], (M,N), 'raise')
@@ -116,9 +116,9 @@ class ModelNormalMC:
         disc_fac = np.exp(-texp*self.intr)
         forward = spot / disc_fac * div_fac
         
-        #np.random.seed(12345)
+        np.random.seed(12345)
         
-        step, M = 0.25, 10000
+        step, M = 0.01, 10000
         N = int(texp / step)
         
         X = np.random.multivariate_normal([0,0], [[1, self.rho], [self.rho, 1]], (M,N), 'raise')
@@ -174,9 +174,9 @@ class ModelBsmCondMC:
         disc_fac = np.exp(-texp*self.intr)
         forward = spot / disc_fac * div_fac
         
-        #np.random.seed(12345)
+        np.random.seed(12345)
         
-        step, M = 0.25, 10000
+        step, M = 0.01, 10000
         N = int(texp / step)
         
         Z = np.random.normal(size=(M,N))
@@ -184,14 +184,16 @@ class ModelBsmCondMC:
         sigma_list = np.cumprod(np.exp(self.vov * np.sqrt(step) * Z - 0.5 * (self.vov ** 2) * step), axis=1) * self.sigma
         if N//2 == 0:
             even = list(range(2,N,2))
-            odd = list(range(1,N,2)
-            I_T = (self.sigma ** 2 + sigma_list[:,-1] ** 2 + 2 * np.sum(sigma_list[:,even] ** 2) + 4 * np.sum(sigma_list[:,odd] ** 2)) / (3*N) / (self.sigma ** 2)
+            odd = list(range(1,N,2))
+            I_T = (self.sigma**2 +sigma_list[:,-1]**2+2*np.sum(sigma_list[:,even]**2, axis=1)+4*np.sum(sigma_list[:,odd]**2, axis=1))/(3*N)/(self.sigma**2)
         else:
             I_T = np.mean(sigma_list ** 2, axis = 1) / (self.sigma ** 2)
-        S_0 = forward * np.exp(self.rho / self.vov * (sigma_list - self.sigma) - (self.rho * self.sigma) ** 2 * texp /2 * I_T)
+        S_0 = forward * np.exp(self.rho / self.vov * (sigma_list[:,-1] - self.sigma) - (self.rho * self.sigma) ** 2 * texp /2 * I_T)
         sigma_BS = self.sigma * np.sqrt((1-self.rho ** 2) * I_T)
-        price_list = bsm.price(strike[:,None], S_0, texp, sigma_N , intr=0.0, divr=0.0, cp_sign=cp)
+        price_list = bsm.price(strike[:,None], S_0, texp, sigma_BS , intr=0.0, divr=0.0, cp_sign=cp)
         price = np.mean(price_list, axis=1)
+        return price
+        
         return price
 
 '''
@@ -230,9 +232,9 @@ class ModelNormalCondMC:
         disc_fac = np.exp(-texp*self.intr)
         forward = spot / disc_fac * div_fac
         
-        #np.random.seed(12345)
+        np.random.seed(12345)
         
-        step, M = 0.25, 10000
+        step, M = 0.01, 10000
         N = int(texp / step)
         
         Z = np.random.normal(size=(M,N))
